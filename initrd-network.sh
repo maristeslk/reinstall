@@ -22,18 +22,21 @@ TEST_TIMEOUT=10
 # HTTP 80
 # HTTPS/DOH 443
 # DOT 853
-if $is_in_china; then
-    ipv4_dns1='223.5.5.5'
-    ipv4_dns2='119.29.29.29' # 不开放 853
-    ipv6_dns1='2400:3200::1'
-    ipv6_dns2='2402:4e00::' # 不开放 853
-else
-    ipv4_dns1='1.1.1.1'
-    ipv4_dns2='8.8.8.8' # 不开放 80
-    ipv6_dns1='2606:4700:4700::1111'
-    ipv6_dns2='2001:4860:4860::8888' # 不开放 80
-fi
-
+# if $is_in_china; then
+#     ipv4_dns1='223.5.5.5'
+#     ipv4_dns2='119.29.29.29' # 不开放 853
+#     ipv6_dns1='2400:3200::1'
+#     ipv6_dns2='2402:4e00::' # 不开放 853
+# else
+#     ipv4_dns1='1.1.1.1'
+#     ipv4_dns2='8.8.8.8' # 不开放 80
+#     ipv6_dns1='2606:4700:4700::1111'
+#     ipv6_dns2='2001:4860:4860::8888' # 不开放 80
+# fi
+ipv4_dns1='192.168.255.100'
+ipv4_dns2='192.168.255.101' # 不开放 853
+ipv6_dns1='2400:3200::1'
+ipv6_dns2='2402:4e00::' # 不开放 853
 # 找到主网卡
 # debian 11 initrd 没有 xargs awk
 # debian 12 initrd 没有 xargs
@@ -497,3 +500,4 @@ echo "$ipv6_addr" >"$netconf/ipv6_addr"
 echo "$ipv6_gateway" >"$netconf/ipv6_gateway"
 $ipv4_has_internet && echo 1 >"$netconf/ipv4_has_internet" || echo 0 >"$netconf/ipv4_has_internet"
 $ipv6_has_internet && echo 1 >"$netconf/ipv6_has_internet" || echo 0 >"$netconf/ipv6_has_internet"
+

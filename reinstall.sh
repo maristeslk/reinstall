@@ -3,12 +3,12 @@
 # shellcheck disable=SC2086
 
 set -eE
-confhome=https://raw.githubusercontent.com/bin456789/reinstall/main
-confhome_cn=https://cnb.cool/bin456789/reinstall/-/git/raw/main
-# confhome_cn=https://www.ghproxy.cc/https://raw.githubusercontent.com/bin456789/reinstall/main
+confhome=https://raw.githubusercontent.com/maristeslk/reinstall/main
+confhome_cn=https://raw.githubusercontent.com/maristeslk/reinstall/main
+# confhome_cn=https://www.ghproxy.cc/https://raw.githubusercontent.com/maristeslk/reinstall/main
 
 # 默认密码
-DEFAULT_PASSWORD=123@@@
+DEFAULT_PASSWORD=mihoyo123
 
 # 用于判断 reinstall.sh 和 trans.sh 是否兼容
 SCRIPT_VERSION=4BACD833-A585-23BA-6CBB-9AA4E08E0003
@@ -81,7 +81,7 @@ Usage: $reinstall_____ anolis      7|8|23
                        [--rdp-port   PORT]
                        [--add-driver INF_OR_DIR]
 
-Manual: https://github.com/bin456789/reinstall
+Manual: https://github.com/maristeslk/reinstall
 
 EOF
     exit 1
@@ -2799,7 +2799,22 @@ install_grub_win() {
     is_in_china && grub_url=https://mirror.nju.edu.cn/gnu/grub/grub-$grub_ver-for-windows.zip ||
         grub_url=https://mirrors.kernel.org/gnu/grub/grub-$grub_ver-for-windows.zip
     curl -Lo $tmp/grub.zip $grub_url
-    # unzip -qo $tmp/grub.zip
+    
+    # 修复 Cygwin 下 7z 命令路径问题
+    if is_in_windows && ! is_have_cmd 7z && [ -d /usr/lib/p7zip ]; then
+        info "Fix 7z command path in Cygwin"
+        cp -r /usr/lib/p7zip/* /usr/bin/ 2>/dev/null || true
+        [ -f /usr/bin/7z.exe ] && mv /usr/bin/7z.exe /usr/bin/7z
+        [ -f /usr/bin/7zr.exe ] && mv /usr/bin/7zr.exe /usr/bin/7zr  
+        [ -f /usr/bin/7za.exe ] && mv /usr/bin/7za.exe /usr/bin/7za
+    fi
+    
+    # 确保有解压工具可用
+    if ! is_have_cmd 7z && ! is_have_cmd unzip; then
+        install_pkg p7zip
+    fi
+    
+    # 解压 GRUB
     7z x $tmp/grub.zip -o$tmp -r -y -xr!i386-efi -xr!locale -xr!themes -bso0
     grub_dir=$tmp/grub-$grub_ver-for-windows
     grub=$grub_dir/grub
@@ -4147,7 +4162,12 @@ if is_efi; then
     if is_in_windows; then
         rm -f /cygdrive/$c/grub.cfg
 
-        bcdedit /set '{fwbootmgr}' bootsequence '{bootmgr}'
+        # 重置启动顺序（仅在支持的系统上）
+        if bcdedit /enum | grep -q '{fwbootmgr}'; then
+            bcdedit /set '{fwbootmgr}' bootsequence '{bootmgr}'
+        fi
+        
+        # 删除之前的reinstall启动项
         bcdedit /enum bootmgr | grep --text -B3 'reinstall' | awk '{print $2}' | grep '{.*}' |
             xargs -I {} cmd /c bcdedit /delete {}
     else
@@ -4499,3 +4519,4 @@ if is_in_windows; then
     echo 'You can run this command to reboot:'
     echo 'shutdown /r /t 0'
 fi
+
