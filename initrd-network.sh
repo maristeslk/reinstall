@@ -225,7 +225,7 @@ test_by_nc() {
     nc -z -v \
         -w "$TEST_TIMEOUT" \
         -s "$src" \
-        "$dst" 443
+        "$dst" 53
 }
 
 is_debian_kali() {

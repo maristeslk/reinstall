@@ -194,9 +194,13 @@ rem bitsadmin /transfer "%~3" /priority foreground %~1 %~2
 :download
 rem certutil 会被 windows Defender 报毒
 rem windows server 2019 要用第二条 certutil 命令
+rem 优先使用 PowerShell 的 Invoke-WebRequest，失败再回退到 certutil
 echo Download: %~1 %~2
 del /q "%~2" 2>nul
 if exist "%~2" (echo Cannot delete %~2 & exit /b 1)
+
+powershell -NoLogo -NoProfile -NonInteractive -Command "$ProgressPreference='SilentlyContinue'; try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls; Invoke-WebRequest -UseBasicParsing -Uri '%~1' -OutFile '%~2' } catch { exit 1 }" >nul 2>&1
+if not errorlevel 1 if exist "%~2" exit /b 0
 
 certutil -urlcache -f -split "%~1" "%~2" >nul
 if not errorlevel 1 if exist "%~2" exit /b 0
@@ -207,6 +211,7 @@ if not errorlevel 1 if exist "%~2" exit /b 0
 rem 下载失败时删除文件，防止下载了一部分导致下次运行时跳过了下载
 del /q "%~2" 2>nul
 exit /b 1
+
 
 :download_with_curl
 rem 加 --insecure 防止以下错误
